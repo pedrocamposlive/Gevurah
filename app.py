@@ -2,24 +2,25 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 from datetime import datetime
+import os
 
-app = Flask(__name__)
-
+app = Flask(__name__, static_folder='static', template_folder='templates')
 DB_NAME = 'database.db'
 
 def init_db():
-    with sqlite3.connect(DB_NAME) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS exercicios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                series INTEGER NOT NULL,
-                carga REAL NOT NULL,
-                data TEXT NOT NULL
-            )
-        ''')
-        conn.commit()
+    if not os.path.exists(DB_NAME):
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS exercicios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    series INTEGER NOT NULL,
+                    carga REAL NOT NULL,
+                    data TEXT NOT NULL
+                )
+            ''')
+            conn.commit()
 
 @app.route('/')
 def index():
@@ -60,4 +61,4 @@ def dados():
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=10000)
+    app.run(host='0.0.0.0', port=5000, debug=False)
