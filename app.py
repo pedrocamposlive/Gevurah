@@ -9,14 +9,25 @@ DB_NAME = 'database.db'
 def init_db():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
+        
+        # Tabela de exercícios
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS exercicios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT UNIQUE NOT NULL
+            )
+        ''')
+
+        # Tabela de séries com relação ao exercício
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS series (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                exercicio TEXT NOT NULL,
-                serie INTEGER NOT NULL,
-                carga REAL NOT NULL,
-                reps INTEGER NOT NULL,
-                data TEXT NOT NULL
+                exercicio_id INTEGER,
+                serie INTEGER,
+                carga REAL,
+                reps INTEGER,
+                data TEXT,
+                FOREIGN KEY (exercicio_id) REFERENCES exercicios(id)
             )
         ''')
         conn.commit()
@@ -25,17 +36,40 @@ def init_db():
 def index():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
+
+        # Listar todos os exercícios para o dropdown
+        cursor.execute('SELECT id, nome FROM exercicios ORDER BY nome')
+        exercicios = cursor.fetchall()
+
+        # Listar as séries com nome do exercício
         cursor.execute('''
-            SELECT exercicio, serie, carga, reps, data
-            FROM series
-            ORDER BY data DESC, exercicio, serie
+            SELECT e.nome, s.serie, s.carga, s.reps, s.data
+            FROM series s
+            JOIN exercicios e ON s.exercicio_id = e.id
+            ORDER BY s.data DESC, e.nome, s.serie
         ''')
         series = cursor.fetchall()
-    return render_template('index.html', series=series)
+
+    return render_template('index.html', exercicios=exercicios, series=series)
+
+@app.route('/adicionar_exercicio', methods=['POST'])
+def adicionar_exercicio():
+    nome = request.form['novo_exercicio'].strip()
+
+    if nome:
+        with sqlite3.connect(DB_NAME) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute('INSERT INTO exercicios (nome) VALUES (?)', (nome,))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                pass  # Exercício já existe, ignorar erro
+
+    return redirect(url_for('index'))
 
 @app.route('/adicionar', methods=['POST'])
 def adicionar():
-    exercicio = request.form['exercicio']
+    exercicio_id = int(request.form['exercicio_id'])
     serie = int(request.form['serie'])
     carga = float(request.form['carga'])
     reps = int(request.form['reps'])
@@ -44,9 +78,9 @@ def adicionar():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO series (exercicio, serie, carga, reps, data)
+            INSERT INTO series (exercicio_id, serie, carga, reps, data)
             VALUES (?, ?, ?, ?, ?)
-        ''', (exercicio, serie, carga, reps, data))
+        ''', (exercicio_id, serie, carga, reps, data))
         conn.commit()
 
     return redirect(url_for('index'))
@@ -56,19 +90,20 @@ def dados():
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT exercicio, data, AVG(carga) as carga_media
-            FROM series
-            GROUP BY exercicio, data
-            ORDER BY data ASC
+            SELECT e.nome, s.data, AVG(s.carga) as carga_media
+            FROM series s
+            JOIN exercicios e ON s.exercicio_id = e.id
+            GROUP BY e.nome, s.data
+            ORDER BY s.data ASC
         ''')
         rows = cursor.fetchall()
 
     dados_formatados = {}
-    for exercicio, data, carga in rows:
-        if exercicio not in dados_formatados:
-            dados_formatados[exercicio] = {"datas": [], "cargas": []}
-        dados_formatados[exercicio]["datas"].append(data)
-        dados_formatados[exercicio]["cargas"].append(carga)
+    for nome, data, carga in rows:
+        if nome not in dados_formatados:
+            dados_formatados[nome] = {"datas": [], "cargas": []}
+        dados_formatados[nome]["datas"].append(data)
+        dados_formatados[nome]["cargas"].append(carga)
 
     return jsonify(dados_formatados)
 
