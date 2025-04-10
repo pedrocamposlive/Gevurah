@@ -1,53 +1,45 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Gevurah - Treino</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gevurah - Séries</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white font-sans p-4 flex flex-col items-center min-h-screen space-y-6">
+<body class="bg-black text-white p-4 font-sans">
 
-    <h1 class="text-2xl font-bold text-center">Gevurah - Treino</h1>
-
-    <!-- Cronômetro -->
-    <div class="text-center">
-        <span id="timer" class="text-3xl font-mono">00:00:00</span>
-        <div class="space-x-2 mt-2">
-            <button onclick="startTimer()" class="bg-gray-800 px-4 py-2 rounded">Iniciar</button>
-            <button onclick="stopTimer()" class="bg-gray-800 px-4 py-2 rounded">Parar</button>
-            <button onclick="resetTimer()" class="bg-gray-800 px-4 py-2 rounded">Resetar</button>
-        </div>
-    </div>
+    <h1 class="text-2xl font-bold mb-4 text-center">Registro de Séries</h1>
 
     <!-- Formulário -->
-    <form action="/adicionar" method="POST" class="w-full max-w-sm flex flex-col gap-2">
-        <input type="text" name="nome" placeholder="Exercício" required class="bg-gray-900 p-2 rounded" />
-        <input type="number" name="series" placeholder="Séries" required class="bg-gray-900 p-2 rounded" />
-        <input type="number" step="0.1" name="carga" placeholder="Carga (kg)" required class="bg-gray-900 p-2 rounded" />
-        <button type="submit" class="bg-white text-black font-semibold py-2 rounded">Registrar</button>
+    <form action="/adicionar" method="POST" class="max-w-md mx-auto flex flex-col gap-2 mb-6">
+        <input type="text" name="exercicio" placeholder="Exercício" required class="bg-gray-800 p-2 rounded" />
+        <input type="number" name="serie" placeholder="Série Nº" required class="bg-gray-800 p-2 rounded" />
+        <input type="number" name="carga" step="0.1" placeholder="Carga (kg)" required class="bg-gray-800 p-2 rounded" />
+        <input type="number" name="reps" placeholder="Repetições" required class="bg-gray-800 p-2 rounded" />
+        <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
     </form>
 
-    <!-- Dashboard -->
-    <div class="w-full max-w-sm">
-        <h2 class="text-xl font-semibold mt-4 mb-2">Histórico</h2>
+    <!-- Histórico -->
+    <div class="max-w-2xl mx-auto">
+        <h2 class="text-xl font-semibold mb-2">Séries Registradas</h2>
         <table class="w-full text-sm">
-            <thead>
-                <tr class="text-left text-gray-400">
+            <thead class="text-gray-400 text-left">
+                <tr>
                     <th>Data</th>
                     <th>Exercício</th>
-                    <th>Séries</th>
+                    <th>Série</th>
                     <th>Carga</th>
+                    <th>Reps</th>
                 </tr>
             </thead>
             <tbody>
-                {% for ex in exercicios %}
+                {% for s in series %}
                 <tr class="border-t border-gray-700">
-                    <td>{{ ex[4] }}</td>
-                    <td>{{ ex[1] }}</td>
-                    <td>{{ ex[2] }}</td>
-                    <td>{{ ex[3] }} kg</td>
+                    <td>{{ s[4] }}</td>
+                    <td>{{ s[0] }}</td>
+                    <td>{{ s[1] }}</td>
+                    <td>{{ s[2] }} kg</td>
+                    <td>{{ s[3] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -55,13 +47,12 @@
     </div>
 
     <!-- Gráfico -->
-    <div class="w-full max-w-sm mt-4">
-        <h2 class="text-xl font-semibold mb-2">Progresso</h2>
-        <canvas id="graficoProgresso" width="300" height="200"></canvas>
+    <div class="max-w-2xl mx-auto mt-10">
+        <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
+        <canvas id="graficoProgresso" height="250"></canvas>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/timer.js"></script>
     <script>
         fetch('/dados')
             .then(res => res.json())
@@ -73,10 +64,10 @@
                     datasets.push({
                         label: nome,
                         data: data[nome].cargas,
-                        borderWidth: 2,
                         borderColor: '#999',
-                        fill: false,
-                        tension: 0.3
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: false
                     });
                 }
 
