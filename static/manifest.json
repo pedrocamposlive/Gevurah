@@ -1,0 +1,21 @@
+{
+  "name": "Gevurah – Fit Progress",
+  "short_name": "Gevurah",
+  "description": "Acompanhe sua evolução no treino com precisão.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "/static/img/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
