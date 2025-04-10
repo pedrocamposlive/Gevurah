@@ -1,90 +1,66 @@
+ ██████      ███████     ██    ██     ██    ██     ██████       █████      ██   ██ 
+██           ██          ██    ██     ██    ██     ██   ██     ██   ██     ██   ██ 
+██   ███     █████       ██    ██     ██    ██     ██████      ███████     ███████ 
+██    ██     ██           ██  ██      ██    ██     ██   ██     ██   ██     ██   ██ 
+ ██████      ███████       ████        ██████      ██   ██     ██   ██     ██   ██  
 
-# Gevurah – Tracker de Treino Pessoal
 
-**Gevurah** é um aplicativo web pessoal criado com Flask para registrar, acompanhar e visualizar sua evolução em treinos de musculação. Inspirado em temas como disciplina, foco e força interior, o nome vem da Cabala, significando "poder" e "autocontrole".
+Gevurah – Fit Progress 🏋🏽‍♂️
 
----
-
-## 🏋️ Funcionalidades
-
-- ✅ Dashboard com nome do exercício, número de séries e carga utilizada
-- 📅 Registro automático da data do treino
-- 📈 Gráfico de evolução de carga por exercício
-- ⏱️ Cronômetro de tempo total de treino
-- 🧠 Interface dark com layout limpo e objetivo
-- 🛠️ Possibilidade de alterar exercícios e ordens conforme a periodização
-- 📲 Suporte a modo PWA (em breve)
+é um app pessoal de acompanhamento de treino de força e hipertrofia, criado com Flask + HTML/CSS, e agora como um **PWA (Progressive Web App)**.  
+Ideal para visualizar progresso real, série por série, exercício por exercício, com dados salvos localmente e usabilidade offline.
 
 ---
 
-## 🚀 Como rodar localmente
+##  Funcionalidades
 
-1. Clone o repositório:
-```bash
-git clone https://github.com/pedrocamposlive/Gevurah.git
-cd Gevurah
-```
+### Registro de Treino
+- Cadastro de **exercícios únicos** com nome personalizado
+- Registro de cada **série individualmente**:
+  - Nº da série
+  - Carga utilizada
+  - Nº de repetições
+  - Data automática
+- Histórico completo com todas as séries ordenadas por data
 
-2. Crie e ative um ambiente virtual (opcional, mas recomendado):
-```bash
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate no Windows
-```
+### Dashboard de Progresso
+- Gráfico com **média de carga** por exercício ao longo do tempo
+- Visualização clara da **evolução semanal** ou por periodização
+- Botão para **revelar o gráfico sob demanda**
 
-3. Instale as dependências:
-```bash
-pip install flask
-```
+### Interface Responsiva
+- Visual escuro (`dark theme`)
+- Layout otimizado para celular (formato 9:16)
+- Interface fluida, moderna e limpa com Tailwind CSS
 
-4. Rode o app:
-```bash
-python app.py
-```
+###   Catálogo de Exercícios
+- Dropdown com exercícios já cadastrados
+- Evita erros de digitação (consistência para os gráficos)
+- Interface separada para **criação de novos exercícios**
 
-5. Acesse no navegador:
-```
-http://localhost:5000
-```
+###   Progressive Web App (PWA)
+- Instalável no Android, iOS e desktop
+- Tela cheia (standalone), ícone customizado com o logo do app
+- `manifest.json` e `service-worker.js` configurados
+- **Splash screen automático** com fundo escuro e logo
 
----
-
-## 📂 Estrutura do Projeto
-
-```
-Gevurah/
-│
-├── app.py
-├── database.db (criado automaticamente)
-├── templates/
-│   └── index.html
-├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── timer.js
-└── README.md
-```
+###   Modo Offline
+- Funciona **sem internet** após primeiro acesso
+- Arquivos estáticos e offline.html **cacheados**
+- Mostra mensagem amigável quando está sem conexão
 
 ---
 
-## 💡 Futuras melhorias
+##   Tecnologias utilizadas
 
-- Autenticação de usuário
-- Suporte a múltiplos perfis
-- Deploy no Render com PWA ativo
-- Exportação de histórico para PDF/CSV
-- Filtros por exercício e estatísticas mais avançadas
-
----
-
-## ✨ Inspiração
-
-> “A disciplina é a ponte entre metas e realizações.” – Jim Rohn
+- Python + Flask
+- HTML5 + Tailwind CSS
+- Chart.js (para gráficos)
+- SQLite3
+- JavaScript (fetch, service worker)
+- PWA (manifest, cache offline)
 
 ---
 
-## 🔗 Licença
+##   Estrutura de diretórios
 
-Este projeto é de uso pessoal e livre para adaptações.
-
----
