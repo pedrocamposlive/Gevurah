@@ -6,24 +6,23 @@
   <title>Gevurah - Registro de Séries</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white p-4 font-sans">
+<body class="bg-black text-white font-sans flex flex-col items-center justify-start min-h-screen p-4">
 
-  <h1 class="text-2xl font-bold mb-6 text-center">Gevurah – Séries de Treino</h1>
+  <div class="w-full max-w-sm space-y-6">
 
-  <!-- Adicionar Novo Exercício -->
-  <div class="max-w-md mx-auto mb-6">
+    <h1 class="text-2xl font-bold text-center">Gevurah – Séries</h1>
+
+    <!-- Adicionar novo exercício -->
     <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
-      <label class="text-sm text-gray-300">Adicionar novo exercício:</label>
-      <input type="text" name="novo_exercicio" placeholder="Nome do exercício"
-             required class="bg-gray-800 p-2 rounded" />
+      <label class="text-sm text-gray-300">Novo exercício:</label>
+      <input type="text" name="novo_exercicio" required placeholder="Ex: Supino"
+             class="bg-gray-800 p-2 rounded" />
       <button type="submit" class="bg-white text-black font-semibold py-2 rounded">
         Cadastrar exercício
       </button>
     </form>
-  </div>
 
-  <!-- Registrar Série -->
-  <div class="max-w-md mx-auto mb-10">
+    <!-- Formulário de registro -->
     <form action="/adicionar" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Selecionar exercício:</label>
       <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
@@ -39,78 +38,89 @@
 
       <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
     </form>
+
+    <!-- Histórico -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2">Histórico</h2>
+      <table class="w-full text-sm text-left">
+        <thead class="text-gray-400">
+          <tr>
+            <th>Data</th>
+            <th>Exercício</th>
+            <th>Série</th>
+            <th>Carga</th>
+            <th>Reps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in series %}
+          <tr class="border-t border-gray-700">
+            <td>{{ s[4] }}</td>
+            <td>{{ s[0] }}</td>
+            <td>{{ s[1] }}</td>
+            <td>{{ s[2] }} kg</td>
+            <td>{{ s[3] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Botão para mostrar gráfico -->
+    <div class="text-center mt-4">
+      <button onclick="mostrarGrafico()" class="bg-gray-700 px-4 py-2 rounded">Visualizar Gráfico</button>
+    </div>
+
+    <!-- Gráfico oculto inicialmente -->
+    <div id="grafico-container" class="mt-4 hidden">
+      <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
+      <canvas id="graficoProgresso" height="250" class="bg-white rounded-md"></canvas>
+    </div>
+
   </div>
 
-  <!-- Histórico -->
-  <div class="max-w-3xl mx-auto">
-    <h2 class="text-xl font-semibold mb-2">Séries Registradas</h2>
-    <table class="w-full text-sm">
-      <thead class="text-left text-gray-400">
-        <tr>
-          <th>Data</th>
-          <th>Exercício</th>
-          <th>Série</th>
-          <th>Carga</th>
-          <th>Reps</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in series %}
-        <tr class="border-t border-gray-700">
-          <td>{{ s[4] }}</td>
-          <td>{{ s[0] }}</td>
-          <td>{{ s[1] }}</td>
-          <td>{{ s[2] }} kg</td>
-          <td>{{ s[3] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Gráfico -->
-  <div class="max-w-3xl mx-auto mt-10">
-    <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
-    <canvas id="graficoProgresso" height="250"></canvas>
-  </div>
-
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    fetch('/dados')
-      .then(res => res.json())
-      .then(data => {
-        const ctx = document.getElementById('graficoProgresso').getContext('2d');
-        const datasets = [];
+    function mostrarGrafico() {
+      document.getElementById("grafico-container").classList.remove("hidden");
 
-        for (let nome in data) {
-          datasets.push({
-            label: nome,
-            data: data[nome].cargas,
-            borderColor: '#999',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: false
-          });
-        }
+      fetch('/dados')
+        .then(res => res.json())
+        .then(data => {
+          const ctx = document.getElementById('graficoProgresso').getContext('2d');
+          const datasets = [];
 
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: data[Object.keys(data)[0]]?.datas || [],
-            datasets: datasets
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { labels: { color: 'white' } }
-            },
-            scales: {
-              x: { ticks: { color: 'white' } },
-              y: { ticks: { color: 'white' } }
-            }
+          for (let nome in data) {
+            datasets.push({
+              label: nome,
+              data: data[nome].cargas,
+              borderColor: '#999',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: false
+            });
           }
+
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: data[Object.keys(data)[0]]?.datas || [],
+              datasets: datasets
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { labels: { color: 'black' } }
+              },
+              scales: {
+                x: { ticks: { color: 'black' } },
+                y: { ticks: { color: 'black' } }
+              }
+            }
+          });
         });
-      });
+    }
   </script>
 </body>
 </html>
