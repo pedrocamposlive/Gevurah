@@ -74,7 +74,7 @@
     <!-- Gráfico oculto inicialmente -->
     <div id="grafico-container" class="mt-4 hidden">
       <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
-      <canvas id="graficoProgresso" height="250" class="bg-white rounded-md"></canvas>
+      <canvas id="graficoProgresso" height="250" class="bg-white rounded-md w-full"></canvas>
     </div>
 
   </div>
@@ -82,8 +82,13 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    let graficoRenderizado = false;
+
     function mostrarGrafico() {
-      document.getElementById("grafico-container").classList.remove("hidden");
+      const container = document.getElementById("grafico-container");
+      container.classList.remove("hidden");
+
+      if (graficoRenderizado) return;
 
       fetch('/dados')
         .then(res => res.json())
@@ -119,6 +124,8 @@
               }
             }
           });
+
+          graficoRenderizado = true;
         });
     }
   </script>
