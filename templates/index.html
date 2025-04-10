@@ -1,94 +1,116 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gevurah - Séries</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gevurah - Registro de Séries</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white p-4 font-sans">
 
-    <h1 class="text-2xl font-bold mb-4 text-center">Registro de Séries</h1>
+  <h1 class="text-2xl font-bold mb-6 text-center">Gevurah – Séries de Treino</h1>
 
-    <!-- Formulário -->
-    <form action="/adicionar" method="POST" class="max-w-md mx-auto flex flex-col gap-2 mb-6">
-        <input type="text" name="exercicio" placeholder="Exercício" required class="bg-gray-800 p-2 rounded" />
-        <input type="number" name="serie" placeholder="Série Nº" required class="bg-gray-800 p-2 rounded" />
-        <input type="number" name="carga" step="0.1" placeholder="Carga (kg)" required class="bg-gray-800 p-2 rounded" />
-        <input type="number" name="reps" placeholder="Repetições" required class="bg-gray-800 p-2 rounded" />
-        <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
+  <!-- Adicionar Novo Exercício -->
+  <div class="max-w-md mx-auto mb-6">
+    <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
+      <label class="text-sm text-gray-300">Adicionar novo exercício:</label>
+      <input type="text" name="novo_exercicio" placeholder="Nome do exercício"
+             required class="bg-gray-800 p-2 rounded" />
+      <button type="submit" class="bg-white text-black font-semibold py-2 rounded">
+        Cadastrar exercício
+      </button>
     </form>
+  </div>
 
-    <!-- Histórico -->
-    <div class="max-w-2xl mx-auto">
-        <h2 class="text-xl font-semibold mb-2">Séries Registradas</h2>
-        <table class="w-full text-sm">
-            <thead class="text-gray-400 text-left">
-                <tr>
-                    <th>Data</th>
-                    <th>Exercício</th>
-                    <th>Série</th>
-                    <th>Carga</th>
-                    <th>Reps</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in series %}
-                <tr class="border-t border-gray-700">
-                    <td>{{ s[4] }}</td>
-                    <td>{{ s[0] }}</td>
-                    <td>{{ s[1] }}</td>
-                    <td>{{ s[2] }} kg</td>
-                    <td>{{ s[3] }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <!-- Registrar Série -->
+  <div class="max-w-md mx-auto mb-10">
+    <form action="/adicionar" method="POST" class="flex flex-col gap-2">
+      <label class="text-sm text-gray-300">Selecionar exercício:</label>
+      <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
+        <option value="">Selecione...</option>
+        {% for ex in exercicios %}
+        <option value="{{ ex[0] }}">{{ ex[1] }}</option>
+        {% endfor %}
+      </select>
 
-    <!-- Gráfico -->
-    <div class="max-w-2xl mx-auto mt-10">
-        <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
-        <canvas id="graficoProgresso" height="250"></canvas>
-    </div>
+      <input type="number" name="serie" placeholder="Série Nº" required class="bg-gray-800 p-2 rounded" />
+      <input type="number" step="0.1" name="carga" placeholder="Carga (kg)" required class="bg-gray-800 p-2 rounded" />
+      <input type="number" name="reps" placeholder="Repetições" required class="bg-gray-800 p-2 rounded" />
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        fetch('/dados')
-            .then(res => res.json())
-            .then(data => {
-                const ctx = document.getElementById('graficoProgresso').getContext('2d');
-                const datasets = [];
+      <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
+    </form>
+  </div>
 
-                for (let nome in data) {
-                    datasets.push({
-                        label: nome,
-                        data: data[nome].cargas,
-                        borderColor: '#999',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: false
-                    });
-                }
+  <!-- Histórico -->
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-xl font-semibold mb-2">Séries Registradas</h2>
+    <table class="w-full text-sm">
+      <thead class="text-left text-gray-400">
+        <tr>
+          <th>Data</th>
+          <th>Exercício</th>
+          <th>Série</th>
+          <th>Carga</th>
+          <th>Reps</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in series %}
+        <tr class="border-t border-gray-700">
+          <td>{{ s[4] }}</td>
+          <td>{{ s[0] }}</td>
+          <td>{{ s[1] }}</td>
+          <td>{{ s[2] }} kg</td>
+          <td>{{ s[3] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data[Object.keys(data)[0]]?.datas || [],
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { labels: { color: 'white' } }
-                        },
-                        scales: {
-                            x: { ticks: { color: 'white' } },
-                            y: { ticks: { color: 'white' } }
-                        }
-                    }
-                });
-            });
-    </script>
+  <!-- Gráfico -->
+  <div class="max-w-3xl mx-auto mt-10">
+    <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
+    <canvas id="graficoProgresso" height="250"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    fetch('/dados')
+      .then(res => res.json())
+      .then(data => {
+        const ctx = document.getElementById('graficoProgresso').getContext('2d');
+        const datasets = [];
+
+        for (let nome in data) {
+          datasets.push({
+            label: nome,
+            data: data[nome].cargas,
+            borderColor: '#999',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: false
+          });
+        }
+
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data[Object.keys(data)[0]]?.datas || [],
+            datasets: datasets
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { labels: { color: 'white' } }
+            },
+            scales: {
+              x: { ticks: { color: 'white' } },
+              y: { ticks: { color: 'white' } }
+            }
+          }
+        });
+      });
+  </script>
 </body>
 </html>
