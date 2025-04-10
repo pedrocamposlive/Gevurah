@@ -1,0 +1,43 @@
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: sans-serif;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+}
+
+input, button {
+    padding: 10px;
+    margin: 5px;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    color: white;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #333;
+    text-align: center;
+}
+
+#cronometro {
+    margin: 20px 0;
+    text-align: center;
+}
+
+#timer {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+}
