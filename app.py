@@ -2,12 +2,11 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 import os
 from datetime import datetime
-from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'super-secret-key'  # Use uma variável de ambiente em produção
+app.secret_key = 'super-secret-key'  # ideal usar uma variável de ambiente
 
-# Conexão com banco PostgreSQL
+# Conexão com PostgreSQL (Render)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db():
