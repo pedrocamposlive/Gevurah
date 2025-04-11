@@ -94,6 +94,18 @@ def index():
 
     return render_template('index.html', exercicios=exercicios, series=series, usuario=session['usuario_nome'])
 
+@app.route('/admin')
+def admin():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, nome, role FROM usuarios ORDER BY nome;")
+        usuarios = cur.fetchall()
+
+    return render_template('admin.html', usuarios=usuarios)
+
 @app.route('/adicionar_exercicio', methods=['POST'])
 def adicionar_exercicio():
     nome = request.form['novo_exercicio'].strip()
