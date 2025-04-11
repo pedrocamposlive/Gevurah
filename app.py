@@ -2,12 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import psycopg2
 import os
 from datetime import datetime
-from urllib.parse import urlparse
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'super-secret-key'  # ideal guardar como variável de ambiente também
+app.secret_key = 'super-secret-key'  # Use uma variável de ambiente em produção
 
-# Conexão com PostgreSQL via DATABASE_URL
+# Conexão com banco PostgreSQL
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db():
@@ -19,7 +19,8 @@ def init_db():
         cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
-                nome TEXT UNIQUE NOT NULL
+                nome TEXT UNIQUE NOT NULL,
+                role TEXT DEFAULT 'user'
             );
         ''')
         cur.execute('''
@@ -49,18 +50,23 @@ def home():
 
         with get_db() as conn:
             cur = conn.cursor()
-            cur.execute("SELECT id FROM usuarios WHERE nome = %s", (nome,))
+            cur.execute("SELECT id, role FROM usuarios WHERE nome = %s", (nome,))
             user = cur.fetchone()
             if not user:
                 cur.execute("INSERT INTO usuarios (nome) VALUES (%s) RETURNING id", (nome,))
                 user = cur.fetchone()
                 conn.commit()
+                role = 'user'
+            else:
+                role = user[1]
 
         session['usuario_id'] = user[0]
         session['usuario_nome'] = nome
+        session['role'] = role
+
         return redirect(url_for('index'))
 
-    return render_template('login.html')  # uma página simples com campo "nome"
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -74,7 +80,6 @@ def index():
 
     with get_db() as conn:
         cur = conn.cursor()
-
         cur.execute('SELECT id, nome FROM exercicios WHERE usuario_id = %s ORDER BY nome', (session['usuario_id'],))
         exercicios = cur.fetchall()
 
@@ -144,7 +149,7 @@ def dados():
         ''', (session['usuario_id'],))
         rows = cur.fetchall()
 
-    dados_formatados = {}
+    dados_formatado = {}
     for nome, data, carga in rows:
         if nome not in dados_formatado:
             dados_formatado[nome] = {"datas": [], "cargas": []}
