@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gevurah Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white min-h-screen font-sans p-4">
+
+  <div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Painel Admin - Gevurah</h1>
+      <form action="/logout" method="get">
+        <button class="text-sm text-gray-400 hover:text-white">Sair</button>
+      </form>
+    </div>
+
+    <table class="w-full text-sm text-left border border-gray-700">
+      <thead class="text-gray-400 bg-gray-800">
+        <tr>
+          <th class="p-2 border border-gray-700">ID</th>
+          <th class="p-2 border border-gray-700">Nome</th>
+          <th class="p-2 border border-gray-700">Função</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in usuarios %}
+        <tr class="border-t border-gray-700">
+          <td class="p-2 border border-gray-700">{{ user[0] }}</td>
+          <td class="p-2 border border-gray-700">{{ user[1] }}</td>
+          <td class="p-2 border border-gray-700">{{ user[2] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
