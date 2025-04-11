@@ -25,12 +25,14 @@
 
     <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario }}</span></p>
 
+    <!-- Cadastro de exercício -->
     <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Novo exercício:</label>
       <input type="text" name="novo_exercicio" required placeholder="Ex: Supino" class="bg-gray-800 p-2 rounded" />
       <button type="submit" class="bg-white text-black font-semibold py-2 rounded">Cadastrar exercício</button>
     </form>
 
+    <!-- Registro de série -->
     <form action="/adicionar" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Selecionar exercício:</label>
       <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
@@ -47,6 +49,7 @@
       <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
     </form>
 
+    <!-- Histórico -->
     <div>
       <h2 class="text-xl font-semibold mb-2 mt-4">Histórico</h2>
       <table class="w-full text-sm text-left">
@@ -73,6 +76,7 @@
       </table>
     </div>
 
+    <!-- Gráfico -->
     <div class="text-center mt-4">
       <button onclick="mostrarGrafico()" class="bg-gray-700 px-4 py-2 rounded">Visualizar Gráfico</button>
     </div>
@@ -83,6 +87,7 @@
     </div>
   </div>
 
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let graficoRenderizado = false;
