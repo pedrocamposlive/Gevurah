@@ -3,42 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gevurah - FIT PROGRESS</title>
+  <title>Gevurah - Treino</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- PWA: Manifesto + Service Worker -->
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <meta name="theme-color" content="#000000" />
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
-        .then(reg => console.log('✅ Service Worker registrado:', reg))
-        .catch(err => console.error('❌ Erro no Service Worker:', err));
+      navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}");
     }
   </script>
 </head>
-<body class="bg-black text-white font-sans flex flex-col items-center justify-start min-h-screen p-4">
+<body class="bg-black text-white font-sans flex flex-col items-center min-h-screen p-4">
 
   <div class="w-full max-w-sm space-y-6">
 
-    <!-- Logo -->
-    <div class="flex justify-center">
-      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Gevurah" class="h-20 w-auto mb-4" />
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Gevurah</h1>
+      <form action="/logout" method="get">
+        <button class="text-sm text-gray-400 hover:text-white">Sair</button>
+      </form>
     </div>
 
-    <h1 class="text-2xl font-bold text-center">Gevurah – FIT PROGRESS </h1>
+    <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario }}</span></p>
 
-    <!-- Adicionar novo exercício -->
+    <!-- Novo exercício -->
     <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Novo exercício:</label>
-      <input type="text" name="novo_exercicio" required placeholder="Ex: Supino"
-             class="bg-gray-800 p-2 rounded" />
-      <button type="submit" class="bg-white text-black font-semibold py-2 rounded">
-        Cadastrar exercício
-      </button>
+      <input type="text" name="novo_exercicio" required placeholder="Ex: Supino" class="bg-gray-800 p-2 rounded" />
+      <button type="submit" class="bg-white text-black font-semibold py-2 rounded">Cadastrar exercício</button>
     </form>
 
-    <!-- Formulário de registro de série -->
+    <!-- Registrar série -->
     <form action="/adicionar" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Selecionar exercício:</label>
       <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
@@ -57,7 +53,7 @@
 
     <!-- Histórico -->
     <div>
-      <h2 class="text-xl font-semibold mb-2">Histórico</h2>
+      <h2 class="text-xl font-semibold mb-2 mt-4">Histórico</h2>
       <table class="w-full text-sm text-left">
         <thead class="text-gray-400">
           <tr>
