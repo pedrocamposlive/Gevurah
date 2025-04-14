@@ -8,32 +8,53 @@
 </head>
 <body class="bg-black text-white min-h-screen font-sans p-4">
 
-  <div class="max-w-2xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
+  <div class="max-w-2xl mx-auto space-y-8">
+
+    <!-- Topo -->
+    <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Painel Admin - Gevurah</h1>
       <form action="/logout" method="get">
         <button class="text-sm text-gray-400 hover:text-white">Sair</button>
       </form>
     </div>
 
-    <table class="w-full text-sm text-left border border-gray-700">
-      <thead class="text-gray-400 bg-gray-800">
-        <tr>
-          <th class="p-2 border border-gray-700">ID</th>
-          <th class="p-2 border border-gray-700">Nome</th>
-          <th class="p-2 border border-gray-700">Função</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in usuarios %}
-        <tr class="border-t border-gray-700">
-          <td class="p-2 border border-gray-700">{{ user[0] }}</td>
-          <td class="p-2 border border-gray-700">{{ user[1] }}</td>
-          <td class="p-2 border border-gray-700">{{ user[2] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <!-- ✅ Formulário de criação de usuário -->
+    <div class="bg-gray-800 p-4 rounded-xl space-y-4">
+      <h2 class="text-xl font-semibold mb-2">Criar Novo Usuário</h2>
+      <form action="/criar_usuario" method="POST" class="flex flex-col gap-3">
+        <input type="text" name="nome" placeholder="Nome do usuário" required class="bg-black p-2 rounded text-white" />
+        <select name="role" required class="bg-black p-2 rounded text-white">
+          <option value="">Selecione o perfil</option>
+          <option value="aluno">Aluno</option>
+          <option value="coach">Coach</option>
+        </select>
+        <button type="submit" class="bg-white text-black font-bold py-2 rounded">Criar usuário</button>
+      </form>
+    </div>
+
+    <!-- Lista de usuários -->
+    <div>
+      <h2 class="text-xl font-semibold mb-2 mt-4">Usuários Registrados</h2>
+      <table class="w-full text-sm text-left border border-gray-700">
+        <thead class="text-gray-400 bg-gray-800">
+          <tr>
+            <th class="p-2 border border-gray-700">ID</th>
+            <th class="p-2 border border-gray-700">Nome</th>
+            <th class="p-2 border border-gray-700">Função</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in usuarios %}
+          <tr class="border-t border-gray-700">
+            <td class="p-2 border border-gray-700">{{ user[0] }}</td>
+            <td class="p-2 border border-gray-700">{{ user[1] }}</td>
+            <td class="p-2 border border-gray-700">{{ user[2] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
   </div>
 
 </body>
