@@ -45,7 +45,7 @@ def init_db():
                     data DATE
                 );
             """)
-            # Seed admin
+            # Seed admin fixo
             cur.execute("""
                 INSERT INTO usuarios (nome, role)
                 VALUES ('admin', 'admin')
@@ -71,7 +71,7 @@ def login():
         return redirect(url_for('index'))
     return render_template('login.html')
 
-@app.route('/index', methods=['GET'])
+@app.route('/index')
 def index():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
@@ -89,6 +89,7 @@ def index():
                 ORDER BY data DESC
             """, (usuario_id,))
             historico = cur.fetchall()
+
     return render_template('index.html', usuario_nome=session['usuario_nome'], exercicios=exercicios, historico=historico)
 
 @app.route('/adicionar_exercicio', methods=['POST'])
@@ -124,33 +125,22 @@ def registrar_serie():
 
     return redirect(url_for('index'))
 
-@app.route('/grafico')
-def grafico():
-    if 'usuario_id' not in session:
-        return redirect(url_for('login'))
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT data, nome, carga
-                FROM series
-                JOIN exercicios ON series.exercicio_id = exercicios.id
-                WHERE series.usuario_id = %s
-                ORDER BY data
-            """, (session['usuario_id'],))
-            dados = cur.fetchall()
-
-    return render_template('grafico.html', dados=dados)
-
 @app.route('/admin')
 def admin():
     if 'role' not in session or session['role'] != 'admin':
         return redirect(url_for('index'))
+
+    filtro = request.args.get('filtro', 'todos')
+
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, nome, role FROM usuarios ORDER BY id")
+            if filtro != 'todos':
+                cur.execute("SELECT id, nome, role FROM usuarios WHERE role = %s ORDER BY id", (filtro,))
+            else:
+                cur.execute("SELECT id, nome, role FROM usuarios ORDER BY id")
             usuarios = cur.fetchall()
-    return render_template('admin.html', usuarios=usuarios)
+
+    return render_template('admin.html', usuarios=usuarios, filtro=filtro)
 
 @app.route('/criar_usuario', methods=['POST'])
 def criar_usuario():
