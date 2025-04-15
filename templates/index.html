@@ -1,14 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gevurah</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gevurah - Treino</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#000000" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}");
+    }
+  </script>
 </head>
-<body class="bg-black text-white font-sans min-h-screen p-4">
-  <div class="max-w-lg mx-auto space-y-6">
+<body class="bg-black text-white font-sans flex flex-col items-center min-h-screen p-4">
+
+  <div class="w-full max-w-md space-y-6">
+
+    <!-- Topo -->
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Gevurah</h1>
       <form action="/logout" method="get">
@@ -16,31 +25,36 @@
       </form>
     </div>
 
-    <p class="text-sm text-gray-400">Usuário: <span class="font-medium">{{ usuario }}</span></p>
+    <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario }}</span></p>
 
+    <!-- Cadastro de exercício -->
     <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Novo exercício:</label>
-      <input type="text" name="novo_exercicio" placeholder="Ex: Supino" class="bg-gray-800 p-2 rounded">
-      <button class="bg-white text-black py-2 font-bold rounded">Cadastrar exercício</button>
+      <input type="text" name="novo_exercicio" required placeholder="Ex: Supino" class="bg-gray-800 p-2 rounded" />
+      <button type="submit" class="bg-white text-black font-semibold py-2 rounded">Cadastrar exercício</button>
     </form>
 
+    <!-- Registro de série -->
     <form action="/adicionar" method="POST" class="flex flex-col gap-2">
       <label class="text-sm text-gray-300">Selecionar exercício:</label>
-      <select name="exercicio_id" class="bg-gray-800 p-2 rounded">
+      <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
         <option value="">Selecione...</option>
         {% for ex in exercicios %}
-        <option value="{{ ex["id"] }}">{{ ex["nome"] }}</option>
+        <option value="{{ ex[0] }}">{{ ex[1] }}</option>
         {% endfor %}
       </select>
-      <input type="number" name="serie" placeholder="Série" class="bg-gray-800 p-2 rounded">
-      <input type="number" name="carga" placeholder="Carga (kg)" class="bg-gray-800 p-2 rounded">
-      <input type="number" name="reps" placeholder="Repetições" class="bg-gray-800 p-2 rounded">
-      <button class="bg-white text-black py-2 font-bold rounded">Registrar Série</button>
+
+      <input type="number" name="serie" placeholder="Série Nº" required class="bg-gray-800 p-2 rounded" />
+      <input type="number" step="0.1" name="carga" placeholder="Carga (kg)" required class="bg-gray-800 p-2 rounded" />
+      <input type="number" name="reps" placeholder="Repetições" required class="bg-gray-800 p-2 rounded" />
+
+      <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
     </form>
 
+    <!-- Histórico -->
     <div>
-      <h2 class="text-lg font-semibold mt-4">Histórico</h2>
-      <table class="w-full text-sm">
+      <h2 class="text-xl font-semibold mb-2 mt-4">Histórico</h2>
+      <table class="w-full text-sm text-left">
         <thead class="text-gray-400">
           <tr>
             <th>Data</th>
@@ -52,11 +66,11 @@
         </thead>
         <tbody>
           {% for s in series %}
-          <tr class="border-t border-gray-800">
+          <tr class="border-t border-gray-700">
             <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
             <td>{{ s[2] }}</td>
-            <td>{{ s[3] }}</td>
+            <td>{{ s[3] }} kg</td>
             <td>{{ s[4] }}</td>
           </tr>
           {% endfor %}
@@ -64,16 +78,19 @@
       </table>
     </div>
 
+    <!-- Gráfico -->
     <div class="text-center mt-4">
       <button onclick="mostrarGrafico()" class="bg-gray-700 px-4 py-2 rounded">Visualizar Gráfico</button>
     </div>
 
     <div id="grafico-container" class="mt-4 hidden">
-      <h2 class="text-lg font-semibold mb-2">Progresso</h2>
-      <canvas id="graficoProgresso" class="bg-white rounded w-full"></canvas>
+      <h2 class="text-xl font-semibold mb-2">Progresso por Exercício</h2>
+      <canvas id="graficoProgresso" height="250" class="bg-white rounded-md w-full"></canvas>
     </div>
   </div>
 
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     let graficoRenderizado = false;
 
@@ -83,10 +100,10 @@
 
       if (graficoRenderizado) return;
 
-      fetch("/dados")
+      fetch('/dados')
         .then(res => res.json())
         .then(data => {
-          const ctx = document.getElementById("graficoProgresso").getContext("2d");
+          const ctx = document.getElementById('graficoProgresso').getContext('2d');
           const datasets = [];
 
           for (let nome in data) {
