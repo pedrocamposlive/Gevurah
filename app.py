@@ -200,6 +200,13 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/forcar_admin')
+def forcar_admin():
+    db = get_db()
+    db.execute("UPDATE usuarios SET role = 'admin' WHERE nome = 'admin'")
+    db.commit()
+    return "Usuário 'admin' promovido!"
+
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
