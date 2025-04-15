@@ -115,6 +115,86 @@ def logout():
     return redirect(url_for('login'))
 
 # ---------------- Init ----------------
+@app.route('/admin')
+def admin():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    filtro = request.args.get('filtro', 'todos')
+    db = get_db()
+    cur = db.cursor()
+
+    cur.execute("SELECT id, nome FROM usuarios WHERE role = 'coach'")
+    coaches = cur.fetchall()
+
+    if filtro != 'todos':
+        cur.execute("""
+            SELECT u.id, u.nome, u.role, c.nome as coach_nome
+            FROM usuarios u
+            LEFT JOIN usuarios c ON u.coach_id = c.id
+            WHERE u.role = ?
+            ORDER BY u.id
+        """, (filtro,))
+    else:
+        cur.execute("""
+            SELECT u.id, u.nome, u.role, c.nome as coach_nome
+            FROM usuarios u
+            LEFT JOIN usuarios c ON u.coach_id = c.id
+            ORDER BY u.id
+        """)
+    
+    usuarios = cur.fetchall()
+    return render_template('admin.html', usuarios=usuarios, filtro=filtro, coaches=coaches)
+
+@app.route('/criar_usuario', methods=['POST'])
+def criar_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    nome = request.form['nome'].strip()
+    senha = request.form['senha'].strip()
+    role = request.form['role']
+    coach_id = request.form.get('coach_id') or None
+
+    if nome and senha and role:
+        hashed = generate_password_hash(senha)
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("""
+            INSERT OR IGNORE INTO usuarios (nome, senha, role, coach_id)
+            VALUES (?, ?, ?, ?)
+        """, (nome, hashed, role, coach_id))
+        db.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/alterar_usuario', methods=['POST'])
+def alterar_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    user_id = request.form['id']
+    novo_role = request.form['novo_role']
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("UPDATE usuarios SET role = ? WHERE id = ?", (novo_role, user_id))
+    db.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/excluir_usuario', methods=['POST'])
+def excluir_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    user_id = request.form['id']
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("DELETE FROM series WHERE usuario_id = ?", (user_id,))
+    cur.execute("DELETE FROM exercicios WHERE usuario_id = ?", (user_id,))
+    cur.execute("DELETE FROM usuarios WHERE id = ?", (user_id,))
+    db.commit()
+    return redirect(url_for('admin'))
+
+
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
