@@ -1,177 +1,207 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 import os
-from datetime import datetime
-from dotenv import load_dotenv
-load_dotenv()
+from datetime import date
+from contextlib import contextmanager
 
 app = Flask(__name__)
-app.secret_key = 'super-secret-key'  # ideal usar uma variável de ambiente
+app.secret_key = os.environ.get("SECRET_KEY", "devkey")
 
-# Conexão com PostgreSQL (Render)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+@contextmanager
 def get_db():
-    return psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(DATABASE_URL)
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 def init_db():
     with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                nome TEXT UNIQUE NOT NULL,
-                role TEXT DEFAULT 'user'
-            );
-        ''')
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS exercicios (
-                id SERIAL PRIMARY KEY,
-                nome TEXT NOT NULL,
-                usuario_id INTEGER REFERENCES usuarios(id)
-            );
-        ''')
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS series (
-                id SERIAL PRIMARY KEY,
-                exercicio_id INTEGER REFERENCES exercicios(id),
-                usuario_id INTEGER REFERENCES usuarios(id),
-                serie INTEGER,
-                carga REAL,
-                reps INTEGER,
-                data DATE
-            );
-        ''')
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT UNIQUE NOT NULL,
+                    role TEXT DEFAULT 'user'
+                );
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS exercicios (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT NOT NULL,
+                    usuario_id INTEGER REFERENCES usuarios(id)
+                );
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS series (
+                    id SERIAL PRIMARY KEY,
+                    exercicio_id INTEGER REFERENCES exercicios(id),
+                    usuario_id INTEGER REFERENCES usuarios(id),
+                    serie INTEGER,
+                    carga REAL,
+                    reps INTEGER,
+                    data DATE
+                );
+            """)
+            # Seed admin
+            cur.execute("""
+                INSERT INTO usuarios (nome, role)
+                VALUES ('admin', 'admin')
+                ON CONFLICT (nome) DO NOTHING;
+            """)
         conn.commit()
 
 @app.route('/', methods=['GET', 'POST'])
-def home():
+def login():
     if request.method == 'POST':
-        nome = request.form['nome'].strip().lower()
-
+        nome = request.form['nome'].strip()
         with get_db() as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT id, role FROM usuarios WHERE nome = %s", (nome,))
-            user = cur.fetchone()
-            if not user:
-                cur.execute("INSERT INTO usuarios (nome) VALUES (%s) RETURNING id", (nome,))
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, role FROM usuarios WHERE nome = %s", (nome,))
                 user = cur.fetchone()
-                conn.commit()
-                role = 'user'
-            else:
-                role = user[1]
-
+                if not user:
+                    cur.execute("INSERT INTO usuarios (nome) VALUES (%s) RETURNING id, role", (nome,))
+                    user = cur.fetchone()
+                    conn.commit()
         session['usuario_id'] = user[0]
         session['usuario_nome'] = nome
-        session['role'] = role
-
+        session['role'] = user[1]
         return redirect(url_for('index'))
-
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('home'))
-
-@app.route('/index')
+@app.route('/index', methods=['GET'])
 def index():
     if 'usuario_id' not in session:
-        return redirect(url_for('home'))
+        return redirect(url_for('login'))
+
+    usuario_id = session['usuario_id']
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, nome FROM exercicios WHERE usuario_id = %s", (usuario_id,))
+            exercicios = cur.fetchall()
+            cur.execute("""
+                SELECT data, nome, serie, carga, reps
+                FROM series
+                JOIN exercicios ON series.exercicio_id = exercicios.id
+                WHERE series.usuario_id = %s
+                ORDER BY data DESC
+            """, (usuario_id,))
+            historico = cur.fetchall()
+    return render_template('index.html', usuario_nome=session['usuario_nome'], exercicios=exercicios, historico=historico)
+
+@app.route('/adicionar_exercicio', methods=['POST'])
+def adicionar_exercicio():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+    nome = request.form['nome'].strip()
+    if nome:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO exercicios (nome, usuario_id) VALUES (%s, %s)", (nome, session['usuario_id']))
+            conn.commit()
+    return redirect(url_for('index'))
+
+@app.route('/registrar_serie', methods=['POST'])
+def registrar_serie():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    exercicio_id = request.form['exercicio_id']
+    serie = request.form['serie']
+    carga = request.form['carga']
+    reps = request.form['reps']
+    data_hoje = date.today()
 
     with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute('SELECT id, nome FROM exercicios WHERE usuario_id = %s ORDER BY nome', (session['usuario_id'],))
-        exercicios = cur.fetchall()
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO series (exercicio_id, usuario_id, serie, carga, reps, data)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (exercicio_id, session['usuario_id'], serie, carga, reps, data_hoje))
+        conn.commit()
 
-        cur.execute('''
-            SELECT e.nome, s.serie, s.carga, s.reps, s.data
-            FROM series s
-            JOIN exercicios e ON s.exercicio_id = e.id
-            WHERE s.usuario_id = %s
-            ORDER BY s.data DESC, e.nome, s.serie
-        ''', (session['usuario_id'],))
-        series = cur.fetchall()
+    return redirect(url_for('index'))
 
-    return render_template('index.html', exercicios=exercicios, series=series, usuario=session['usuario_nome'])
+@app.route('/grafico')
+def grafico():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT data, nome, carga
+                FROM series
+                JOIN exercicios ON series.exercicio_id = exercicios.id
+                WHERE series.usuario_id = %s
+                ORDER BY data
+            """, (session['usuario_id'],))
+            dados = cur.fetchall()
+
+    return render_template('grafico.html', dados=dados)
 
 @app.route('/admin')
 def admin():
     if 'role' not in session or session['role'] != 'admin':
         return redirect(url_for('index'))
-
     with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute("SELECT id, nome, role FROM usuarios ORDER BY nome;")
-        usuarios = cur.fetchall()
-
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, nome, role FROM usuarios ORDER BY id")
+            usuarios = cur.fetchall()
     return render_template('admin.html', usuarios=usuarios)
 
-@app.route('/adicionar_exercicio', methods=['POST'])
-def adicionar_exercicio():
-    nome = request.form['novo_exercicio'].strip()
-    if 'usuario_id' not in session:
-        return redirect(url_for('home'))
+@app.route('/criar_usuario', methods=['POST'])
+def criar_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    nome = request.form['nome'].strip()
+    role = request.form['role']
+    if nome and role:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO usuarios (nome, role) VALUES (%s, %s) ON CONFLICT (nome) DO NOTHING", (nome, role))
+            conn.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/alterar_usuario', methods=['POST'])
+def alterar_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
+
+    user_id = request.form['id']
+    novo_role = request.form['novo_role']
 
     with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute('''
-            INSERT INTO exercicios (nome, usuario_id)
-            VALUES (%s, %s)
-            ON CONFLICT DO NOTHING
-        ''', (nome, session['usuario_id']))
+        with conn.cursor() as cur:
+            cur.execute("UPDATE usuarios SET role = %s WHERE id = %s", (novo_role, user_id))
         conn.commit()
 
-    return redirect(url_for('index'))
+    return redirect(url_for('admin'))
 
-@app.route('/adicionar', methods=['POST'])
-def adicionar():
-    if 'usuario_id' not in session:
-        return redirect(url_for('home'))
+@app.route('/excluir_usuario', methods=['POST'])
+def excluir_usuario():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('index'))
 
-    exercicio_id = int(request.form['exercicio_id'])
-    serie = int(request.form['serie'])
-    carga = float(request.form['carga'])
-    reps = int(request.form['reps'])
-    data = datetime.now().date()
+    user_id = request.form['id']
 
     with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute('''
-            INSERT INTO series (exercicio_id, usuario_id, serie, carga, reps, data)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (exercicio_id, session['usuario_id'], serie, carga, reps, data))
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM series WHERE usuario_id = %s", (user_id,))
+            cur.execute("DELETE FROM exercicios WHERE usuario_id = %s", (user_id,))
+            cur.execute("DELETE FROM usuarios WHERE id = %s", (user_id,))
         conn.commit()
 
-    return redirect(url_for('index'))
+    return redirect(url_for('admin'))
 
-@app.route('/dados')
-def dados():
-    if 'usuario_id' not in session:
-        return jsonify({})
-
-    with get_db() as conn:
-        cur = conn.cursor()
-        cur.execute('''
-            SELECT e.nome, s.data, AVG(s.carga)
-            FROM series s
-            JOIN exercicios e ON s.exercicio_id = e.id
-            WHERE s.usuario_id = %s
-            GROUP BY e.nome, s.data
-            ORDER BY s.data
-        ''', (session['usuario_id'],))
-        rows = cur.fetchall()
-
-    dados_formatado = {}
-    for nome, data, carga in rows:
-        if nome not in dados_formatado:
-            dados_formatado[nome] = {"datas": [], "cargas": []}
-        dados_formatado[nome]["datas"].append(data.strftime('%Y-%m-%d'))
-        dados_formatado[nome]["cargas"].append(carga)
-
-    return jsonify(dados_formatado)
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
