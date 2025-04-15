@@ -18,7 +18,7 @@
       </form>
     </div>
 
-    <!-- Filtro por tipo -->
+    <!-- Filtro -->
     <form method="GET" action="/admin" class="mb-4">
       <label class="text-sm text-gray-300 mr-2">Filtrar por perfil:</label>
       <select name="filtro" onchange="this.form.submit()" class="bg-gray-800 text-white p-2 rounded">
@@ -40,6 +40,15 @@
           <option value="coach">Coach</option>
           <option value="admin">Admin</option>
         </select>
+
+        <!-- Dropdown de coach -->
+        <select name="coach_id" class="bg-black p-2 rounded text-white">
+          <option value="">Coach responsável (opcional)</option>
+          {% for coach in coaches %}
+            <option value="{{ coach[0] }}">{{ coach[1] }}</option>
+          {% endfor %}
+        </select>
+
         <button type="submit" class="bg-white text-black font-bold py-2 rounded">Criar usuário</button>
       </form>
     </div>
@@ -53,30 +62,41 @@
             <th class="p-2 border border-gray-700">ID</th>
             <th class="p-2 border border-gray-700">Nome</th>
             <th class="p-2 border border-gray-700">Função</th>
+            <th class="p-2 border border-gray-700">Coach</th>
             <th class="p-2 border border-gray-700">Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for user in usuarios %}
           <tr class="border-t border-gray-700">
-            <td class="p-2 border border-gray-700">{{ user[0] }}</td>
-            <td class="p-2 border border-gray-700">{{ user[1] }}</td>
-            <td class="p-2 border border-gray-700">{{ user[2] }}</td>
+            <td class="p-2 border border-gray-700">{{ user.id }}</td>
+            <td class="p-2 border border-gray-700">{{ user.nome }}</td>
+            <td class="p-2 border border-gray-700">{{ user.role }}</td>
+            <td class="p-2 border border-gray-700">
+              {{ user.coach_nome if user.coach_nome else '—' }}
+            </td>
             <td class="p-2 border border-gray-700 space-x-2">
+
+              <!-- Ver Dashboard -->
+              <a href="/dashboard_usuario/{{ user.id }}" class="text-green-400 hover:underline text-xs">Dashboard</a>
+
+              <!-- Alterar função -->
               <form action="/alterar_usuario" method="POST" class="inline">
-                <input type="hidden" name="id" value="{{ user[0] }}">
+                <input type="hidden" name="id" value="{{ user.id }}">
                 <select name="novo_role" class="bg-black text-white p-1 text-sm rounded">
-                  <option value="user" {% if user[2] == 'user' %}selected{% endif %}>User</option>
-                  <option value="coach" {% if user[2] == 'coach' %}selected{% endif %}>Coach</option>
-                  <option value="admin" {% if user[2] == 'admin' %}selected{% endif %}>Admin</option>
+                  <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                  <option value="coach" {% if user.role == 'coach' %}selected{% endif %}>Coach</option>
+                  <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
                 </select>
                 <button type="submit" class="text-blue-400 hover:underline text-xs">Alterar</button>
               </form>
 
+              <!-- Excluir -->
               <form action="/excluir_usuario" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                <input type="hidden" name="id" value="{{ user[0] }}">
+                <input type="hidden" name="id" value="{{ user.id }}">
                 <button type="submit" class="text-red-400 hover:underline text-xs">Excluir</button>
               </form>
+
             </td>
           </tr>
           {% endfor %}
