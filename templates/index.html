@@ -23,7 +23,7 @@
       </form>
     </div>
 
-    <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario }}</span></p>
+    <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario_nome }}</span></p>
 
     <!-- Cadastro de exercício -->
     <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
@@ -63,13 +63,13 @@
           </tr>
         </thead>
         <tbody>
-          {% for s in series %}
+          {% for s in historico %}
           <tr class="border-t border-gray-700">
-            <td>{{ s[4] }}</td>
             <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
-            <td>{{ s[2] }} kg</td>
-            <td>{{ s[3] }}</td>
+            <td>{{ s[2] }}</td>
+            <td>{{ s[3] }} kg</td>
+            <td>{{ s[4] }}</td>
           </tr>
           {% endfor %}
         </tbody>
