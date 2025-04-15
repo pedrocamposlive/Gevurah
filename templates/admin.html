@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Gevurah</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel Admin - Gevurah</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-black text-white min-h-screen p-4 font-sans">
+
   <div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- Topo -->
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold">Painel Admin - Gevurah</h1>
+      <h1 class="text-2xl font-bold">Admin - Gevurah</h1>
       <form action="/logout" method="get">
         <button class="text-sm text-gray-400 hover:text-white">Sair</button>
       </form>
     </div>
 
+    <!-- Filtro de perfil -->
     <form method="GET" action="/admin" class="mb-4">
       <label class="text-sm text-gray-300 mr-2">Filtrar por perfil:</label>
-      <select name="filtro" onchange="this.form.submit()" class="bg-gray-800 text-white p-2 rounded">
+      <select name="filtro" onchange="this.form.submit()" class="bg-gray-900 text-white p-2 rounded">
         <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
         <option value="aluno" {% if filtro == 'aluno' %}selected{% endif %}>Alunos</option>
         <option value="coach" {% if filtro == 'coach' %}selected{% endif %}>Coaches</option>
@@ -25,10 +29,12 @@
       </select>
     </form>
 
-    <div class="bg-gray-800 p-4 rounded-xl space-y-4">
+    <!-- Criar novo usuário -->
+    <div class="bg-gray-900 p-4 rounded-xl space-y-4">
       <h2 class="text-xl font-semibold mb-2">Criar Novo Usuário</h2>
       <form action="/criar_usuario" method="POST" class="flex flex-col gap-3">
         <input type="text" name="nome" placeholder="Nome do usuário" required class="bg-black p-2 rounded text-white" />
+        <input type="password" name="senha" placeholder="Senha" required class="bg-black p-2 rounded text-white" />
         <select name="role" required class="bg-black p-2 rounded text-white">
           <option value="">Perfil</option>
           <option value="aluno">Aluno</option>
@@ -39,7 +45,7 @@
         <select name="coach_id" class="bg-black p-2 rounded text-white">
           <option value="">Coach responsável (opcional)</option>
           {% for coach in coaches %}
-            <option value="{{ coach["id"] }}">{{ coach["nome"] }}</option>
+            <option value="{{ coach['id'] }}">{{ coach['nome'] }}</option>
           {% endfor %}
         </select>
 
@@ -47,40 +53,45 @@
       </form>
     </div>
 
+    <!-- Lista de usuários -->
     <div>
       <h2 class="text-xl font-semibold mb-2 mt-4">Usuários Registrados</h2>
-      <table class="w-full text-sm text-left border border-gray-700">
-        <thead class="text-gray-400 bg-gray-800">
+      <table class="w-full text-sm text-left border border-gray-800">
+        <thead class="bg-gray-900 text-gray-400">
           <tr>
-            <th class="p-2 border border-gray-700">ID</th>
-            <th class="p-2 border border-gray-700">Nome</th>
-            <th class="p-2 border border-gray-700">Função</th>
-            <th class="p-2 border border-gray-700">Coach</th>
-            <th class="p-2 border border-gray-700">Ações</th>
+            <th class="p-2 border border-gray-800">ID</th>
+            <th class="p-2 border border-gray-800">Nome</th>
+            <th class="p-2 border border-gray-800">Perfil</th>
+            <th class="p-2 border border-gray-800">Coach</th>
+            <th class="p-2 border border-gray-800">Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for user in usuarios %}
-          <tr class="border-t border-gray-700">
-            <td class="p-2 border border-gray-700">{{ user.id }}</td>
-            <td class="p-2 border border-gray-700">{{ user.nome }}</td>
-            <td class="p-2 border border-gray-700">{{ user.role }}</td>
-            <td class="p-2 border border-gray-700">{{ user.coach_nome if user.coach_nome else '—' }}</td>
-            <td class="p-2 border border-gray-700 space-x-2">
+          <tr class="border-t border-gray-800">
+            <td class="p-2 border border-gray-800">{{ user['id'] }}</td>
+            <td class="p-2 border border-gray-800">{{ user['nome'] }}</td>
+            <td class="p-2 border border-gray-800">{{ user['role'] }}</td>
+            <td class="p-2 border border-gray-800">{{ user['coach_nome'] if user['coach_nome'] else '—' }}</td>
+            <td class="p-2 border border-gray-800 space-x-2">
+
+              <!-- Alterar perfil -->
               <form action="/alterar_usuario" method="POST" class="inline">
-                <input type="hidden" name="id" value="{{ user.id }}">
+                <input type="hidden" name="id" value="{{ user['id'] }}">
                 <select name="novo_role" class="bg-black text-white p-1 text-sm rounded">
-                  <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
-                  <option value="coach" {% if user.role == 'coach' %}selected{% endif %}>Coach</option>
-                  <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                  <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>User</option>
+                  <option value="coach" {% if user['role'] == 'coach' %}selected{% endif %}>Coach</option>
+                  <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Admin</option>
                 </select>
                 <button type="submit" class="text-blue-400 hover:underline text-xs">Alterar</button>
               </form>
 
+              <!-- Excluir usuário -->
               <form action="/excluir_usuario" method="POST" class="inline" onsubmit="return confirm('Tem certeza que deseja excluir?');">
-                <input type="hidden" name="id" value="{{ user.id }}">
+                <input type="hidden" name="id" value="{{ user['id'] }}">
                 <button type="submit" class="text-red-400 hover:underline text-xs">Excluir</button>
               </form>
+
             </td>
           </tr>
           {% endfor %}
@@ -89,5 +100,6 @@
     </div>
 
   </div>
+
 </body>
 </html>
