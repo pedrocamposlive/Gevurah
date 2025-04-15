@@ -1,0 +1,19 @@
+# Bytecode Python
+__pycache__/
+*.py[cod]
+
+# SQLite DB
+database.db
+
+# Virtualenv
+.venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# Sistema
+.DS_Store
