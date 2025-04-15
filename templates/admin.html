@@ -8,7 +8,7 @@
 </head>
 <body class="bg-black text-white min-h-screen font-sans p-4">
 
-  <div class="max-w-3xl mx-auto space-y-8">
+  <div class="max-w-4xl mx-auto space-y-8">
 
     <!-- Topo -->
     <div class="flex justify-between items-center">
@@ -17,6 +17,17 @@
         <button class="text-sm text-gray-400 hover:text-white">Sair</button>
       </form>
     </div>
+
+    <!-- Filtro por tipo -->
+    <form method="GET" action="/admin" class="mb-4">
+      <label class="text-sm text-gray-300 mr-2">Filtrar por perfil:</label>
+      <select name="filtro" onchange="this.form.submit()" class="bg-gray-800 text-white p-2 rounded">
+        <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
+        <option value="aluno" {% if filtro == 'aluno' %}selected{% endif %}>Alunos</option>
+        <option value="coach" {% if filtro == 'coach' %}selected{% endif %}>Coaches</option>
+        <option value="admin" {% if filtro == 'admin' %}selected{% endif %}>Admins</option>
+      </select>
+    </form>
 
     <!-- Criar usuário -->
     <div class="bg-gray-800 p-4 rounded-xl space-y-4">
