@@ -9,7 +9,6 @@
 <body class="bg-black text-white font-sans flex flex-col items-center min-h-screen p-4">
   <div class="w-full max-w-sm space-y-6">
 
-    <!-- Topo -->
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">Gevurah</h1>
       <form action="/logout" method="get">
@@ -60,14 +59,7 @@
           {% for s in series %}
           <tr class="border-t border-gray-700">
             <td>{{ s[4] }}</td>
-            <td>
-              {{ s[0] }}
-              {% if sugestoes[s[0]] %}
-              <div class="text-xs text-gray-400 mt-1">
-                Variações: {{ sugestoes[s[0]] | join(' • ') }}
-              </div>
-              {% endif %}
-            </td>
+            <td>{{ s[0] }}</td>
             <td>{{ s[1] }}</td>
             <td>{{ s[2] }} kg</td>
             <td>{{ s[3] }}</td>
