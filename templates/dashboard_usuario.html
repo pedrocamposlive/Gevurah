@@ -6,47 +6,42 @@
   <title>Dashboard do Aluno</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white font-sans min-h-screen p-4">
-  <div class="max-w-3xl mx-auto space-y-6">
+<body class="bg-black text-white min-h-screen p-4 font-sans">
+  <div class="max-w-4xl mx-auto space-y-6">
 
-    <!-- Topo -->
     <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold">Dashboard - {{ usuario_nome }}</h1>
-      <a href="/admin" class="text-sm text-gray-400 hover:text-white">← Voltar</a>
+      <h1 class="text-2xl font-bold">Dashboard do {{ usuario_nome }}</h1>
+      <form action="/logout" method="get">
+        <button class="text-sm text-gray-400 hover:text-white">Sair</button>
+      </form>
     </div>
 
-    <!-- Tabela de exercícios -->
-    <div>
-      <h2 class="text-xl font-semibold mb-2 mt-4">Histórico de Treinos</h2>
-      <table class="w-full text-sm text-left border border-gray-700">
-        <thead class="text-gray-400 bg-gray-800">
-          <tr>
-            <th class="p-2 border border-gray-700">Data</th>
-            <th class="p-2 border border-gray-700">Exercício</th>
-            <th class="p-2 border border-gray-700">Série</th>
-            <th class="p-2 border border-gray-700">Carga</th>
-            <th class="p-2 border border-gray-700">Reps</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in series %}
-          <tr class="border-t border-gray-700">
-            <td class="p-2 border border-gray-700">{{ s[0] }}</td>
-            <td class="p-2 border border-gray-700">
-              {{ s[1] }}
-              {% if sugestoes[s[1]] %}
-              <div class="text-xs text-gray-400 mt-1">
-                Variações: {{ sugestoes[s[1]] | join(' • ') }}
-              </div>
-              {% endif %}
-            </td>
-            <td class="p-2 border border-gray-700">{{ s[2] }}</td>
-            <td class="p-2 border border-gray-700">{{ s[3] }} kg</td>
-            <td class="p-2 border border-gray-700">{{ s[4] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <table class="w-full text-sm text-left border border-gray-700">
+      <thead class="text-gray-400 bg-gray-800">
+        <tr>
+          <th class="p-2 border border-gray-700">Data</th>
+          <th class="p-2 border border-gray-700">Exercício</th>
+          <th class="p-2 border border-gray-700">Série</th>
+          <th class="p-2 border border-gray-700">Carga</th>
+          <th class="p-2 border border-gray-700">Reps</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in historico %}
+        <tr class="border-t border-gray-700">
+          <td class="p-2 border border-gray-700">{{ s[0] }}</td>
+          <td class="p-2 border border-gray-700">{{ s[1] }}</td>
+          <td class="p-2 border border-gray-700">{{ s[2] }}</td>
+          <td class="p-2 border border-gray-700">{{ s[3] }} kg</td>
+          <td class="p-2 border border-gray-700">{{ s[4] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Exportar PDF -->
+    <div class="text-center mt-6">
+      <a href="/exportar_pdf/{{ request.path.split('/')[-1] }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Exportar PDF</a>
     </div>
 
   </div>
