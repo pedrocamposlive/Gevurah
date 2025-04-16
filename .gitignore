@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 
 # SQLite DB
-database.db
+# database.db
 
 # Virtualenv
 .venv/
