@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novo Treino</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white min-h-screen p-4">
+  <div class="max-w-md mx-auto">
+    <h1 class="text-xl font-bold mb-4">Novo Treino para {{ aluno['nome'] }}</h1>
+    <form method="POST" class="space-y-4">
+      <input name="titulo" placeholder="Título do Treino" required class="w-full p-2 rounded bg-gray-800 text-white" />
+      <textarea name="descricao" placeholder="Descrição do treino..." required class="w-full p-2 rounded bg-gray-800 text-white"></textarea>
+      <button type="submit" class="bg-white text-black font-bold px-4 py-2 rounded">Salvar Treino</button>
+    </form>
+  </div>
+</body>
+</html>
