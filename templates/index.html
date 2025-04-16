@@ -1,74 +1,42 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gevurah - Treino</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gevurah - Treinos</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white font-sans flex flex-col items-center min-h-screen p-4">
-  <div class="w-full max-w-xl space-y-6">
-
-    <div class="flex justify-between items-center">
+<body class="bg-black text-white min-h-screen p-6">
+  <div class="max-w-2xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
       <h1 class="text-2xl font-bold">Gevurah</h1>
-      <form action="/logout" method="get">
-        <button class="text-sm text-gray-400 hover:text-white">Sair</button>
-      </form>
+      <a href="/logout" class="text-sm text-gray-400 hover:text-white">Sair</a>
     </div>
+    <p class="text-gray-400 mb-4">Usuário: <strong>{{ usuario }}</strong></p>
 
-    <p class="text-sm text-gray-400 text-center">Usuário: <span class="font-medium">{{ usuario }}</span></p>
-
-    <!-- Cadastro de exercício -->
-    <form action="/adicionar_exercicio" method="POST" class="flex flex-col gap-2">
-      <label class="text-sm text-gray-300">Novo exercício:</label>
-      <input type="text" name="novo_exercicio" required placeholder="Ex: Supino" class="bg-gray-800 p-2 rounded" />
-      <button type="submit" class="bg-white text-black font-semibold py-2 rounded">Cadastrar exercício</button>
-    </form>
-
-    <!-- Registro de série -->
-    <form action="/adicionar" method="POST" class="flex flex-col gap-2">
-      <label class="text-sm text-gray-300">Selecionar exercício:</label>
-      <select name="exercicio_id" required class="bg-gray-800 p-2 rounded">
-        <option value="">Selecione...</option>
-        {% for ex in exercicios %}
-        <option value="{{ ex[0] }}">{{ ex[1] }}</option>
+    <h2 class="text-lg font-semibold mb-2">Histórico</h2>
+    <table class="w-full text-left border border-gray-700">
+      <thead class="bg-gray-800">
+        <tr>
+          <th class="p-2">Data</th>
+          <th class="p-2">Exercício</th>
+          <th class="p-2">Série</th>
+          <th class="p-2">Carga</th>
+          <th class="p-2">Reps</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in series %}
+        <tr class="border-t border-gray-700">
+          <td class="p-2">{{ s['data'] }}</td>
+          <td class="p-2">{{ s['nome'] }}</td>
+          <td class="p-2">{{ s['serie'] }}</td>
+          <td class="p-2">{{ s['carga'] }}</td>
+          <td class="p-2">{{ s['reps'] }}</td>
+        </tr>
         {% endfor %}
-      </select>
-
-      <input type="number" name="serie" placeholder="Série Nº" required class="bg-gray-800 p-2 rounded" />
-      <input type="number" step="0.1" name="carga" placeholder="Carga (kg)" required class="bg-gray-800 p-2 rounded" />
-      <input type="number" name="reps" placeholder="Repetições" required class="bg-gray-800 p-2 rounded" />
-
-      <button type="submit" class="bg-white text-black font-bold py-2 rounded">Registrar Série</button>
-    </form>
-
-    <!-- Histórico -->
-    <div>
-      <h2 class="text-xl font-semibold mb-2 mt-4">Histórico</h2>
-      <table class="w-full text-sm text-left">
-        <thead class="text-gray-400">
-          <tr>
-            <th>Data</th>
-            <th>Exercício</th>
-            <th>Série</th>
-            <th>Carga</th>
-            <th>Reps</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in series %}
-          <tr class="border-t border-gray-700">
-            <td>{{ s[0] }}</td>
-            <td>{{ s[1] }}</td>
-            <td>{{ s[2] }}</td>
-            <td>{{ s[3] }} kg</td>
-            <td>{{ s[4] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
+      </tbody>
+    </table>
   </div>
 </body>
 </html>
