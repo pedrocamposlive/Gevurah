@@ -9,8 +9,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "devkey")
 
 DATABASE = 'database.db'
 
-# DB CONNECTION
-
+# ---------------- DB Connection ----------------
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -24,8 +23,7 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-# DB INIT
-
+# ---------------- DB Init ----------------
 def init_db():
     with app.app_context():
         db = get_db()
@@ -65,6 +63,7 @@ def init_db():
             );
         ''')
 
+        # Seed admin user with default password "admin123"
         cur.execute("SELECT * FROM usuarios WHERE nome = 'admin'")
         if not cur.fetchone():
             hashed = generate_password_hash('admin123')
@@ -72,8 +71,7 @@ def init_db():
 
         db.commit()
 
-# LOGIN ROUTE
-
+# ---------------- Routes ----------------
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -87,22 +85,53 @@ def login():
             session['usuario_id'] = user['id']
             session['usuario_nome'] = user['nome']
             session['role'] = user['role']
-
             if user['role'] == 'admin':
-                return redirect('/admin')
+                return redirect(url_for('admin'))
             elif user['role'] == 'coach':
-                return redirect('/admin')
+                return redirect(url_for('painel_coach'))
             else:
-                return redirect('/index')
+                return redirect(url_for('index'))
         else:
             return render_template('login.html', erro="Usuário ou senha inválidos")
     return render_template('login.html')
+
+@app.route('/index')
+def index():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+    db = get_db()
+    cur = db.cursor()
+    usuario_id = session['usuario_id']
+    cur.execute("SELECT id, nome FROM exercicios WHERE usuario_id = ?", (usuario_id,))
+    exercicios = cur.fetchall()
+    cur.execute("""
+        SELECT data, nome, serie, carga, reps
+        FROM series
+        JOIN exercicios ON series.exercicio_id = exercicios.id
+        WHERE series.usuario_id = ?
+        ORDER BY data DESC
+    """, (usuario_id,))
+    historico = cur.fetchall()
+    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico)
+
+@app.route('/admin')
+def admin():
+    if 'role' not in session or session['role'] != 'admin':
+        return redirect(url_for('login'))
+    return render_template('admin.html')
+
+@app.route('/painel_coach')
+def painel_coach():
+    if 'role' not in session or session['role'] != 'coach':
+        return redirect(url_for('login'))
+    return "Painel do Coach em construção"
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# ---------------- Init ----------------
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
