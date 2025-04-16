@@ -1,11 +1,11 @@
-# app.py (atualizado com sugestões de exercícios por IA)
-
-from flask import Flask, render_template, request, redirect, url_for, session, g
+from flask import Flask, render_template, request, redirect, url_for, session, g, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 import sqlite3
 from datetime import date
 import os
-from sugestoes import buscar_sugestoes
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "devkey")
@@ -66,6 +66,7 @@ def init_db():
             );
         ''')
 
+        # Seed admin user with default password "admin123"
         cur.execute("SELECT * FROM usuarios WHERE nome = 'admin'")
         if not cur.fetchone():
             hashed = generate_password_hash('admin123')
@@ -112,14 +113,57 @@ def index():
         ORDER BY data DESC
     """, (usuario_id,))
     historico = cur.fetchall()
-    sugestoes = {ex['nome']: buscar_sugestoes(ex['nome']) for ex in exercicios}
-    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico, sugestoes=sugestoes)
+    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico)
+
+@app.route('/admin')
+def admin():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('admin.html')
+
+@app.route('/exportar_pdf/<int:usuario_id>')
+def exportar_pdf(usuario_id):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("SELECT nome FROM usuarios WHERE id = ?", (usuario_id,))
+    usuario_nome = cur.fetchone()['nome']
+
+    cur.execute("""
+        SELECT data, nome, serie, carga, reps
+        FROM series
+        JOIN exercicios ON series.exercicio_id = exercicios.id
+        WHERE series.usuario_id = ?
+        ORDER BY data DESC
+    """, (usuario_id,))
+    series = cur.fetchall()
+
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    pdf.setTitle(f"Relatório de Treino - {usuario_nome}")
+
+    pdf.setFont("Helvetica-Bold", 16)
+    pdf.drawString(40, 750, f"Relatório de Treino - {usuario_nome}")
+
+    pdf.setFont("Helvetica", 10)
+    y = 720
+    for row in series:
+        linha = f"Data: {row[0]} | Ex: {row[1]} | Série: {row[2]} | Carga: {row[3]}kg | Reps: {row[4]}"
+        pdf.drawString(40, y, linha)
+        y -= 15
+        if y < 50:
+            pdf.showPage()
+            y = 750
+
+    pdf.save()
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=f"relatorio_{usuario_nome}.pdf", mimetype='application/pdf')
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# ---------------- Init ----------------
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
