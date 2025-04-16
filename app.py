@@ -41,33 +41,48 @@ def init_db():
         ''')
 
         cur.execute('''
-            CREATE TABLE IF NOT EXISTS exercicios (
+            CREATE TABLE IF NOT EXISTS treinos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                usuario_id INTEGER,
-                FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+                aluno_id INTEGER,
+                descricao TEXT NOT NULL,
+                data DATE DEFAULT CURRENT_DATE,
+                FOREIGN KEY (aluno_id) REFERENCES usuarios(id)
             );
         ''')
 
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS series (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                exercicio_id INTEGER,
-                usuario_id INTEGER,
-                serie INTEGER,
-                carga REAL,
-                reps INTEGER,
-                data DATE,
-                FOREIGN KEY (exercicio_id) REFERENCES exercicios(id),
-                FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-            );
-        ''')
-
-        # Seed admin user with default password "admin123"
+        # Seed admin user
         cur.execute("SELECT * FROM usuarios WHERE nome = 'admin'")
         if not cur.fetchone():
             hashed = generate_password_hash('admin123')
             cur.execute("INSERT INTO usuarios (nome, senha, role) VALUES (?, ?, 'admin')", ('admin', hashed))
+
+        # Seed coach
+        cur.execute("SELECT * FROM usuarios WHERE nome = 'coachbeta'")
+        if not cur.fetchone():
+            hashed = generate_password_hash('coach123')
+            cur.execute("INSERT INTO usuarios (nome, senha, role) VALUES (?, ?, 'coach')", ('coachbeta', hashed))
+            coach_id = cur.lastrowid
+
+            hashed_aluno = generate_password_hash('aluno123')
+            cur.execute("INSERT INTO usuarios (nome, senha, role, coach_id) VALUES (?, ?, 'user', ?)", ('alunobeta', hashed_aluno, coach_id))
+            aluno_id = cur.lastrowid
+
+            # Exemplo de treino baseado na imagem
+            treino_texto = '''
+B - ( Costas e bíceps )
+
+- Remada curvada c/ barra peg supinada smith 5 x20/15/12/10/8 (c/ progressão de carga a cada série)
+- Remada cavalinho 4x15 rep (carga máxima)
+- Remada unilateral máquina pegada neutra 4x15/12/12/10
+- Remada baixa c/ triângulo 4x15 rep
+- Crucifixo inverso c/ halteres 4x15 rep (carga máxima)
+- Rosca scott c/ barra W + conjugado c/ martelo alternada 4x12 rep
+- Rosca alternada sentada 3x15 rep
+- Abs supra + abs infra 3x15 rep
+
+Obs: descanso de 1 min entre as séries'''
+
+            cur.execute("INSERT INTO treinos (aluno_id, descricao) VALUES (?, ?)", (aluno_id, treino_texto))
 
         db.commit()
 
@@ -85,6 +100,8 @@ def login():
             session['usuario_id'] = user['id']
             session['usuario_nome'] = user['nome']
             session['role'] = user['role']
+            if user['role'] == 'admin' or user['role'] == 'coach':
+                return redirect(url_for('admin'))
             return redirect(url_for('index'))
         else:
             return render_template('login.html', erro="Usuário ou senha inválidos")
@@ -97,17 +114,30 @@ def index():
     db = get_db()
     cur = db.cursor()
     usuario_id = session['usuario_id']
-    cur.execute("SELECT id, nome FROM exercicios WHERE usuario_id = ?", (usuario_id,))
-    exercicios = cur.fetchall()
-    cur.execute("""
-        SELECT data, nome, serie, carga, reps
-        FROM series
-        JOIN exercicios ON series.exercicio_id = exercicios.id
-        WHERE series.usuario_id = ?
-        ORDER BY data DESC
-    """, (usuario_id,))
-    historico = cur.fetchall()
-    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico)
+
+    # Verificar treino do usuário
+    cur.execute("SELECT * FROM treinos WHERE aluno_id = ? ORDER BY data DESC LIMIT 1", (usuario_id,))
+    treino = cur.fetchone()
+
+    return render_template("index.html", usuario=session['usuario_nome'], treino=treino)
+
+@app.route('/admin')
+def admin():
+    if 'role' not in session or session['role'] not in ['admin', 'coach']:
+        return redirect(url_for('login'))
+
+    db = get_db()
+    cur = db.cursor()
+    usuario_id = session['usuario_id']
+    role = session['role']
+
+    if role == 'admin':
+        cur.execute("SELECT u.id, u.nome, u.role, c.nome as coach_nome FROM usuarios u LEFT JOIN usuarios c ON u.coach_id = c.id ORDER BY u.id")
+    else:
+        cur.execute("SELECT u.id, u.nome, u.role, c.nome as coach_nome FROM usuarios u LEFT JOIN usuarios c ON u.coach_id = c.id WHERE u.coach_id = ? ORDER BY u.id", (usuario_id,))
+
+    usuarios = cur.fetchall()
+    return render_template('admin.html', usuarios=usuarios)
 
 @app.route('/logout')
 def logout():
@@ -115,86 +145,6 @@ def logout():
     return redirect(url_for('login'))
 
 # ---------------- Init ----------------
-@app.route('/admin')
-def admin():
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('index'))
-
-    filtro = request.args.get('filtro', 'todos')
-    db = get_db()
-    cur = db.cursor()
-
-    cur.execute("SELECT id, nome FROM usuarios WHERE role = 'coach'")
-    coaches = cur.fetchall()
-
-    if filtro != 'todos':
-        cur.execute("""
-            SELECT u.id, u.nome, u.role, c.nome as coach_nome
-            FROM usuarios u
-            LEFT JOIN usuarios c ON u.coach_id = c.id
-            WHERE u.role = ?
-            ORDER BY u.id
-        """, (filtro,))
-    else:
-        cur.execute("""
-            SELECT u.id, u.nome, u.role, c.nome as coach_nome
-            FROM usuarios u
-            LEFT JOIN usuarios c ON u.coach_id = c.id
-            ORDER BY u.id
-        """)
-    
-    usuarios = cur.fetchall()
-    return render_template('admin.html', usuarios=usuarios, filtro=filtro, coaches=coaches)
-
-@app.route('/criar_usuario', methods=['POST'])
-def criar_usuario():
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('index'))
-
-    nome = request.form['nome'].strip()
-    senha = request.form['senha'].strip()
-    role = request.form['role']
-    coach_id = request.form.get('coach_id') or None
-
-    if nome and senha and role:
-        hashed = generate_password_hash(senha)
-        db = get_db()
-        cur = db.cursor()
-        cur.execute("""
-            INSERT OR IGNORE INTO usuarios (nome, senha, role, coach_id)
-            VALUES (?, ?, ?, ?)
-        """, (nome, hashed, role, coach_id))
-        db.commit()
-    return redirect(url_for('admin'))
-
-@app.route('/alterar_usuario', methods=['POST'])
-def alterar_usuario():
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('index'))
-
-    user_id = request.form['id']
-    novo_role = request.form['novo_role']
-    db = get_db()
-    cur = db.cursor()
-    cur.execute("UPDATE usuarios SET role = ? WHERE id = ?", (novo_role, user_id))
-    db.commit()
-    return redirect(url_for('admin'))
-
-@app.route('/excluir_usuario', methods=['POST'])
-def excluir_usuario():
-    if 'role' not in session or session['role'] != 'admin':
-        return redirect(url_for('index'))
-
-    user_id = request.form['id']
-    db = get_db()
-    cur = db.cursor()
-    cur.execute("DELETE FROM series WHERE usuario_id = ?", (user_id,))
-    cur.execute("DELETE FROM exercicios WHERE usuario_id = ?", (user_id,))
-    cur.execute("DELETE FROM usuarios WHERE id = ?", (user_id,))
-    db.commit()
-    return redirect(url_for('admin'))
-
-
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
