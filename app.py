@@ -1,8 +1,11 @@
+# app.py (atualizado com sugestões de exercícios por IA)
+
 from flask import Flask, render_template, request, redirect, url_for, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from datetime import date
 import os
+from sugestoes import buscar_sugestoes
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "devkey")
@@ -45,8 +48,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT NOT NULL,
                 usuario_id INTEGER,
-                ordem INTEGER DEFAULT 0,
-                observacao TEXT DEFAULT ''
+                FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
             );
         ''')
 
@@ -64,7 +66,6 @@ def init_db():
             );
         ''')
 
-        # Seed admin user with default password "admin123"
         cur.execute("SELECT * FROM usuarios WHERE nome = 'admin'")
         if not cur.fetchone():
             hashed = generate_password_hash('admin123')
@@ -86,12 +87,8 @@ def login():
             session['usuario_id'] = user['id']
             session['usuario_nome'] = user['nome']
             session['role'] = user['role']
-
-            # Redirecionamento baseado no tipo de usuário
-            if user['role'] == 'admin':
+            if user['role'] == 'admin' or user['role'] == 'coach':
                 return redirect(url_for('admin'))
-            elif user['role'] == 'coach':
-                return redirect(url_for('admin'))  # futura rota coach_dashboard
             else:
                 return redirect(url_for('index'))
         else:
@@ -115,56 +112,14 @@ def index():
         ORDER BY data DESC
     """, (usuario_id,))
     historico = cur.fetchall()
-    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico)
-
-@app.route('/admin')
-def admin():
-    if 'role' not in session or session['role'] not in ['admin', 'coach']:
-        return redirect(url_for('login'))
-
-    db = get_db()
-    cur = db.cursor()
-    filtro = request.args.get('filtro', 'todos')
-    usuario_id = session['usuario_id']
-    role = session['role']
-
-    cur.execute("SELECT id, nome FROM usuarios WHERE role = 'coach'")
-    coaches = cur.fetchall()
-
-    if role == 'admin':
-        if filtro != 'todos':
-            cur.execute("""
-                SELECT u.id, u.nome, u.role, c.nome as coach_nome
-                FROM usuarios u
-                LEFT JOIN usuarios c ON u.coach_id = c.id
-                WHERE u.role = ?
-                ORDER BY u.id
-            """, (filtro,))
-        else:
-            cur.execute("""
-                SELECT u.id, u.nome, u.role, c.nome as coach_nome
-                FROM usuarios u
-                LEFT JOIN usuarios c ON u.coach_id = c.id
-                ORDER BY u.id
-            """)
-    elif role == 'coach':
-        cur.execute("""
-            SELECT u.id, u.nome, u.role, c.nome as coach_nome
-            FROM usuarios u
-            LEFT JOIN usuarios c ON u.coach_id = c.id
-            WHERE u.coach_id = ?
-            ORDER BY u.id
-        """, (usuario_id,))
-
-    usuarios = cur.fetchall()
-    return render_template('admin.html', usuarios=usuarios, filtro=filtro, coaches=coaches)
+    sugestoes = {ex['nome']: buscar_sugestoes(ex['nome']) for ex in exercicios}
+    return render_template("index.html", usuario=session['usuario_nome'], exercicios=exercicios, series=historico, sugestoes=sugestoes)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ---------------- Init ----------------
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
